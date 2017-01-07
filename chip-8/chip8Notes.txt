@@ -1,0 +1,33 @@
+CHIP-8 is a virtual machine. 
+
+Specs:
+
+Memory-
+
+Mostly commonly implemented in 4K systems which had 4096 (0x1000) memory locations all of which are 8 bits (a byte).
+
+CHIP-8 interpreter occupies first 512 bytes. Thus, most programs begin at 512 (0x200) memory location.
+
+The uppermost 256 bytes (0xF00-0xFFF) are reserved for display refresh and 96 bytes below that (OxEA0-0xEFF) were reserved
+for call stack, internal use and other variables.
+
+Registers-
+
+16 8-bit registers named from V0 to VF. VF shouldn't be used as it is a flag. - "not borrow" flag + carry flag. In draw it's VF is set upon pixel collision. 
+
+Address register I or l is 16 bits wids and is used with several opcodes. 
+
+Stack-
+
+Used only to store return addresses for subroutines. 12 (48 bytes) levels original. Modern can be 16 levels.
+
+Timers- 
+
+2 timers. 60 hertz to 0. Hertz - one cycle per second.
+
+1. Delay timer - Timing events of games. Is set and read.
+2. Sound timer- Sound effects. Nonzero is a beeping sound.
+
+Input 
+
+Hex keyboard. 16 keys from 0 to F. 8, 4, 6, and 2 are for directional input. 3 opcodes related to this. 
