@@ -25,5 +25,12 @@ int main(){
 	unsigned char delay_timer;
 	unsigned char sound_timer;
 
+	//Stack and stack pointer
+	unsigned short stack[16];
+	unsigned short sp;
 	
+	//HEX based keypad
+	unsigned char key[16];
+
+
 }
