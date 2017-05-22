@@ -1,2 +1,2 @@
-# Emulation
+Emulation
 Video game emulation projects
