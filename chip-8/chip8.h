@@ -69,6 +69,61 @@ void chip8::emulateCycle(){
 	break;
 	//more opcodes
 
+	case 0x2000:
+		stack[sp] = pc;
+		++sp;
+		pc = opcode & 0x0FFF;
+	break;
+
+	case 0x0004:
+		if(V[(opcode & 0x00F0) >> 4] > (0xFF - V(opcode & 0x0F00) >>  8]))
+			V[0xF] = 1; //carry
+		else
+			V[0xF] = 0;
+		V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+		pc += 2;
+	break;
+
+	case 0x0033:
+		memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
+		memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
+		memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
+		pc +=2;
+	break;
+	
+	case 0xD000:
+	{
+		unsigned short x = V[(opcode & 0x0F00) >> 8];
+		unsigned short y = V[(opcode & 0x00F0) >> 4];
+		unsigned short height = opcode & 0x000F;
+		unsigned short pixel;
+
+		V[0xF] = 0;
+		for (int yline = 0; yline < height; yline++){
+			pixel = memory[I + yline];
+			for(int xline = 0; xline < 8; xline++){
+				if(gfx[( x + xline + ((y +yline) * 64))] == 1){
+					V[0xF] = 1;
+				gfx[x + xline + ((y + yline) * 64)] ^= 1;
+				}
+			}
+		}
+	
+		drawFlag = true;
+		pc += 2;
+	}
+	break;
+
+	case 0xE000:
+		switch(opcode & 0x00FF){
+			// EX9E: Skips the next instruction 
+			// if the key stored in VX is pressed
+			case 0x009E:
+				if(key[V[(opcode & 0x0F00) >> 8]] != 0)
+					pc += 4;
+				else
+					pc += 2;
+			break;
 	//Execute Opcode
 	
 	//Update timers
