@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include //OpenGL graphics and input
+// #include OpenGL graphics and input
 #include "chip8.h" //CPU implementation
 
 chip8 myChip8;
