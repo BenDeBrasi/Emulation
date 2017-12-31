@@ -22,9 +22,28 @@ signed char chip8_fontset[80] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 }
 
-//Function Pointers for opcodes. Second pointer for special case 0x8 opcodes
-void (*Chip8Table[17])();
-void (*Chip8Artithmetic[16])();
+void (*Chip8Table[17]) = 
+{
+	0NNN      , cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
+	cpuARITHMETIC, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
+	cpuNULL
+};
+
+void (*Chip8Arithmetic[16]) = 
+{
+	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
+	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
+};
+
+//Jump to a machine code routine at nnn.
+void ONNN(unsigned short opcode){
+	unsigned short address = 0;
+	address = opcode | address;
+	stack[sp] = pc;
+	sp++;
+	pc = memory[address];
+}
+
 
 
 void chip8::initialize(){
@@ -35,19 +54,38 @@ void chip8::initialize(){
 	sp = 0; //Reset stack pointer
 	
 	//Clear display
-	//Clear stack
-	//Clear regs VO-VF
-	//Clear memory
-
-	//Load fontset
-	for(int i = 0; i < 80; ++i){
-		memory[i] = chip8_fontset[i];
-		
-	//Reset timers
+	int i;
+	for(i = 0; i < SCREEN_SIZE; i++){
+		screen[i] = 0;
 	}
 
+	//Clear stack
+	for(i = 0; i < STACK_SIZE; i++){
+		stack[i] = 0;
+	}
+	
+	//Clear registers
+	for(i = 0; i < CPU_REG_SIZE; i++){
+		V[i] = 0;
+	}
+
+	//Clear memory
+	for(i = 0; i < SYS_MEM_SIZE; i++){
+		memory[i] = 0;
+	}
+
+
+	//Load fontset
+	for(i = 0; i < 80; ++i){
+		memory[i] = chip8_fontset[i];
+	}
+
+	//Reset timers
+	delay_timer = 0;
+	sound_timer = 0;
+
 	//load program into mem using fopen in binary mode
-	for(int i = 0; i < bufferSize; ++i)
+	for(i = 0; i < bufferSize; ++i)
 		memory[i+512] = buffer[i]
 }
 

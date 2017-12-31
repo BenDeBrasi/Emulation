@@ -4,7 +4,7 @@ Specs:
 
 Memory-
 
-Mostly commonly implemented in 4K systems which had 4096 (0x1000) memory locations all of which are 8 bits (a byte).
+Most commonly implemented in 4K systems which had 4096 (0x1000) memory locations all of which are 8 bits (a byte).
 
 CHIP-8 interpreter occupies first 512 bytes. Thus, most programs begin at 512 (0x200) memory location.
 
