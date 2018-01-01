@@ -24,7 +24,7 @@ signed char chip8_fontset[80] =
 
 void (*Chip8Table[17]) = 
 {
-	0NNN      , cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
+	0NNN      , clear_display, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
 	cpuARITHMETIC, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
 	cpuNULL
 };
@@ -35,8 +35,8 @@ void (*Chip8Arithmetic[16]) =
 	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
 };
 
-//Jump to a machine code routine at nnn.
-void ONNN(unsigned short opcode){
+//Jump to a machine code routine at nnn. Opcode 0NNN
+void 0NNN(unsigned short opcode){
 	unsigned short address = 0;
 	address = opcode | address;
 	stack[sp] = pc;
@@ -44,6 +44,31 @@ void ONNN(unsigned short opcode){
 	pc = memory[address];
 }
 
+//Clears display. Opcode 00E0
+void clear_display(char display[]){
+	int i;
+	for(i = 0; i < SCREEN_SIZE; i++){
+		display[i] = 0;
+	}
+
+	//Use *j or j? Wouldn't NULL be wrong cause the random mem spot could be NULL or not be NULL?
+	char *j;
+	for(j = display; *j != NULL; j++){
+		*j = 0;	
+	}
+}	
+
+//Returns from a subroutine. Opcode 00EE.
+void return_sub(){
+	pc = stack[sp];
+	sp--;	
+}
+
+//Jumps to location nnn. Opcode 1NNN.
+void jump(){
+	
+}
+	
 
 
 void chip8::initialize(){
