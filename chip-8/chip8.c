@@ -22,9 +22,21 @@ signed char chip8_fontset[80] =
   0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 }
 
+/* Key for Opcodes:
+
+	NNN: address
+	NN: 8-bit constant
+	N: 4-bit constant
+	X and Y: 4-bit register identifier
+	PC : Program Counter
+	I : 16bit register (For memory address) (Similar to void pointer)
+
+*/
+
+//Expand these 2 to include all 35 opcodes in both this file and .h. Determine which functions need to be in second.
 void (*Chip8Table[17]) = 
 {
-	0NNN      , clear_display, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
+	0NNN      , clear_display, return_sub, goto_NNN, call_NNN, VxIsNN, VxIsNotNN, VxIsNotVy, 
 	cpuARITHMETIC, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
 	cpuNULL
 };
@@ -37,11 +49,9 @@ void (*Chip8Arithmetic[16]) =
 
 //Jump to a machine code routine at nnn. Opcode 0NNN
 void 0NNN(unsigned short opcode){
-	unsigned short address = 0;
-	address = opcode | address;
 	stack[sp] = pc;
 	sp++;
-	pc = memory[address];
+	pc = memory[opcode | 0];
 }
 
 //Clears display. Opcode 00E0
@@ -63,12 +73,46 @@ void return_sub(){
 	pc = stack[sp];
 	sp--;	
 }
-
 //Jumps to location nnn. Opcode 1NNN.
-void jump(){
-	
+void goto_NNN(){
+	//Creating num 0x1000 by shifting 0x0001 12 times then using ^ to toggle that bit only.
+	pc = memory[opcode ^ (0x0001 << 12)];
 }
 	
+//Calls subroutine at nnn. Opcode 2NNN.
+void call_NNN(){
+	stack[sp] = pc;
+	sp++;
+	//Creating num 0x2000 by shifting 0x0001 13 times then using ^ to toggle that bit only.
+	pc = opcode ^ (0x0001 << 13);
+}
+
+//Checking if stack pointer is at limit? Increment sp before or after placing pc in it?
+
+//Skips next instruction if Vx = NN. Opcode 3XNN.
+void VxIsNN(){
+	if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
+		pc+=4;
+	else
+		pc+=2;
+}
+
+//Skips next instruction if Vx != NN. Opcode 4xNN.
+void VxIsNotNN(){		
+	if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF))
+		pc+=4;
+	else
+		pc+=2;
+}
+
+
+//Skips next instruction if Vx = Vy. Opcode 5xY0.
+void VxIsNotVy(){	
+	if(V[(opcode & 0x0F00) >> 8] == V[((opcode & 0x00F0) >> 4)])
+		pc+=4;
+	else
+		pc+=2;
+}
 
 
 void chip8::initialize(){
