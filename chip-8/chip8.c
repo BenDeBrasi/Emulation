@@ -107,11 +107,78 @@ void VxIsNotNN(){
 
 
 //Skips next instruction if Vx = Vy. Opcode 5xY0.
-void VxIsNotVy(){	
+void VxIsVy(){	
 	if(V[(opcode & 0x0F00) >> 8] == V[((opcode & 0x00F0) >> 4)])
 		pc+=4;
 	else
 		pc+=2;
+}
+
+//Sets Vx = NN. Opcode 6XNN.
+void NNToVx(){
+	V[((opcode & 0x0F00) >> 8)] = (opcode & 0x00FF);
+}
+
+//Adds NN to Vx. Opcode 7XNN.
+void NNAddedToVx(){
+	V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+}
+
+//Sets Vx to the value of Vy. Opcode 8XY0.
+void VxToVy(){
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+}
+
+//Sets Vx to Vx OR Vy. Opcode 8XY1.
+void VxToOR(){
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4]; 						
+}
+
+//Sets Vx to Vx AND Vy. Opcode 8XY2. 
+void VxToAND(){
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4]; 
+}
+
+//Sets Vx to Vx XOR Vy. Opcode 8XY3. 
+void VxToAND(){
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4]; 
+}
+
+//Adds Vy and Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY4.
+void VxVyAddedToVxCarry(){
+	unsigned short num = V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4];
+	//May have to change to bit comparasion. num > 0x00FF?
+	V[(opcode & 0x0F00) >> 8] = (num & 0x00FF);
+	
+	if(num > 255){
+		V[0x000F] = 1;
+	}
+	
+	else{
+		V[0x000F] = 0;
+	}
+}
+
+
+//Subtracts Vy from Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY5.
+void VyVxSubtractedToVxCarry(){
+	unsigned short num = V[(opcode & 0x0F00) >> 8] - V[(opcode & 0x00F0) >> 4];
+	//Online doc says if Vx > Vy then Vf = 1, but shouldn't it be Vy > Vx?
+	V[(opcode & 0x0F00) >> 8] = (num & 0x00FF);
+	if(V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4]){
+		V[0x000F] = 1;
+	}
+	
+	else{
+		V[0x000F] = 0;
+	}
+}
+
+//PROBLEM: 2 documentation sources seem to be saying different things about functionality. Must research opcode further.
+//Set Vf as least sig bit in Vy. Shifts Vy right by 1 (divides by 2) and sets Vx as result. Opcode 8XY6.
+void VyDiv2IntoVxCarry(){
+	V[0x000F] = V[(opcode & 0x00F0) >> 4] & 0x0001;
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] >> 1;	
 }
 
 
