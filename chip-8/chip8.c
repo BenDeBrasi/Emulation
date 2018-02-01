@@ -66,6 +66,8 @@ void clear_display(char display[]){
 	for(j = display; *j != NULL; j++){
 		*j = 0;	
 	}
+
+	pc+=2;
 }	
 
 //Returns from a subroutine. Opcode 00EE.
@@ -73,6 +75,7 @@ void return_sub(){
 	pc = stack[sp];
 	sp--;	
 }
+
 //Jumps to location nnn. Opcode 1NNN.
 void goto_NNN(){
 	//Creating num 0x1000 by shifting 0x0001 12 times then using ^ to toggle that bit only.
@@ -117,31 +120,37 @@ void VxIsVy(){
 //Sets Vx = NN. Opcode 6XNN.
 void NNToVx(){
 	V[((opcode & 0x0F00) >> 8)] = (opcode & 0x00FF);
+	pc += 2;
 }
 
 //Adds NN to Vx. Opcode 7XNN.
 void NNAddedToVx(){
 	V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+	pc+=2;
 }
 
 //Sets Vx to the value of Vy. Opcode 8XY0.
 void VxToVy(){
 	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+	pc+=2;
 }
 
 //Sets Vx to Vx OR Vy. Opcode 8XY1.
 void VxToOR(){
 	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4]; 						
+	pc+=2;
 }
 
 //Sets Vx to Vx AND Vy. Opcode 8XY2. 
 void VxToAND(){
 	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4]; 
+	pc+=2;
 }
 
 //Sets Vx to Vx XOR Vy. Opcode 8XY3. 
 void VxToAND(){
 	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4]; 
+	pc+=2;
 }
 
 //Adds Vy and Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY4.
@@ -157,6 +166,8 @@ void VxVyAddedToVxCarry(){
 	else{
 		V[0x000F] = 0;
 	}
+
+	pc+=2;
 }
 
 
@@ -172,15 +183,80 @@ void VyVxSubtractedToVxCarry(){
 	else{
 		V[0x000F] = 0;
 	}
+
+	pc+=2;
 }
 
-//PROBLEM: 2 documentation sources seem to be saying different things about functionality. Must research opcode further.
 //Set Vf as least sig bit in Vy. Shifts Vy right by 1 (divides by 2) and sets Vx as result. Opcode 8XY6.
 void VyDiv2IntoVxCarry(){
 	V[0x000F] = V[(opcode & 0x00F0) >> 4] & 0x0001;
 	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] >> 1;	
+	pc+=2;
 }
 
+//Sets Vx = Vy - Vx. If Vy > Vx then Vf = 1, o.w. 0. Opcode 8XY7.
+void Op_8XY7(){
+	
+	if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >>8])
+		V[0x000F] = 1;
+	else
+		V[0x000F] = 0;
+
+	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >>4] - V[(opcode & 0x0F00) >> 8];
+	pc+=2;
+}
+
+//If most sig fig bit of Vx is 1, then Vf is set to 1 o.w. 0. Then Vx *= 2. Opcode 8XYE.
+void Op_8XYE(){
+	
+	if(V[(opcode & 0x0F00) >> 8] & 0x1000 == 1)
+		V[0x000F] = 1;
+	else
+		V[0x000F] = 0;
+
+	V[(opcode & 0x0F00) >> 8] *= 2;
+	pc+=2;
+}
+
+//Skips next instruction if Vx != Vy. Opcode 9XY0.
+void Op_9XY0(){
+	if(V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
+		pc+=4;
+	else
+		pc+=2;
+}
+
+//Sets value of register I to nnn. Opcode Annn.
+void Op_Annn(){
+	I = (opcode & 0x0FFF);
+	pc += 2;
+}
+
+//Jumps pc =  nnn + v0. Opcode BNNN.
+void Op_Bnnn(){
+	pc = (opcode & 0x0FFF) +V[0];
+}
+
+//Set Vx = random byte AND kk. Opcode CXNN.
+void Op_CXNN(){
+	V[(opcode & 0x0F00) >> 8] = ((rand() % 255) & (opcode & 0x00FF));
+	pc +=2;
+}
+
+//Draw a sprite at coordinate (Vx, Vy) with width 8 and N height. Write from reg I. Vf is set to if pixel erases. Opcode DXYN.
+void Op_DXYN(){
+	
+	char *pixel = screen[V[(opcode & 0x0F00) >> 8]][V[(opcode & 0x00F0) >> 4]];
+	char tmpixel = pixel;
+	*mem_start = memory[I]
+	int i;
+
+	for(i = 0; i < (opcode & 0x000F);i++){
+		if(tmp == 1 && *a == 0)
+			V[0x000F] = 1;
+	}
+		
+}
 
 void chip8::initialize(){
 	//Initialize registers and memory once
