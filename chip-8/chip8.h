@@ -23,7 +23,7 @@ unsigned short I;
 unsigned short pc;
 
 //pixel state array 1 if lighted 0 if dark
-unsigned char screen[64 *32];
+unsigned char screen[64][32];
 
 //Timers 1 sound 1 gameplay
 unsigned char delay_timer;

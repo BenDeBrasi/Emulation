@@ -47,6 +47,33 @@ void (*Chip8Arithmetic[16]) =
 	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
 };
 
+//Functions for commonly used values embedded in opcodes. Of the form AXAA, AAYA, ALLL, AANN and AAAN respectively.
+
+
+short getX(opcode){
+	return (opcode & 0x0F00) >> 8;
+}
+
+short getY(opcode){
+	return (opcode & 0x00F0)  >> 4;
+}
+
+
+//Made LLL so its not confused with NN.
+short getLLL(opcode){
+	return (opcode & 0x0FFF);
+}
+
+short getNN(opcode){
+	return (opcode & 0x00FF);
+}
+
+//Made F to not confuse with other getLLL or getNN.
+short getF(opcode){
+	return (opcode & 0x000F);
+}
+
+
 //Jump to a machine code routine at nnn. Opcode 0NNN
 void 0NNN(unsigned short opcode){
 	stack[sp] = pc;
@@ -94,7 +121,7 @@ void call_NNN(){
 
 //Skips next instruction if Vx = NN. Opcode 3XNN.
 void VxIsNN(){
-	if(V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
+	if( V[getX(opcode)] == getNNN(opcode) )
 		pc+=4;
 	else
 		pc+=2;
@@ -102,7 +129,7 @@ void VxIsNN(){
 
 //Skips next instruction if Vx != NN. Opcode 4xNN.
 void VxIsNotNN(){		
-	if(V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF))
+	if( V[getX(opcode)] != getNN(opcode) )
 		pc+=4;
 	else
 		pc+=2;
@@ -111,7 +138,7 @@ void VxIsNotNN(){
 
 //Skips next instruction if Vx = Vy. Opcode 5xY0.
 void VxIsVy(){	
-	if(V[(opcode & 0x0F00) >> 8] == V[((opcode & 0x00F0) >> 4)])
+	if( V[getX(opcode)] == V[getY(opcode)] )
 		pc+=4;
 	else
 		pc+=2;
@@ -119,45 +146,45 @@ void VxIsVy(){
 
 //Sets Vx = NN. Opcode 6XNN.
 void NNToVx(){
-	V[((opcode & 0x0F00) >> 8)] = (opcode & 0x00FF);
+	V[getX(opcode)] = getNN(opcode);
 	pc += 2;
 }
 
 //Adds NN to Vx. Opcode 7XNN.
 void NNAddedToVx(){
-	V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+	V[getX(opcode)] += getNN(opcode);
 	pc+=2;
 }
 
 //Sets Vx to the value of Vy. Opcode 8XY0.
 void VxToVy(){
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+	V[getX(opcode)] = V[getY(opcode)];
 	pc+=2;
 }
 
 //Sets Vx to Vx OR Vy. Opcode 8XY1.
 void VxToOR(){
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4]; 						
+	V[getX(opcode)] = V[getX(opcode)] | V[getY(opcode)]; 						
 	pc+=2;
 }
 
 //Sets Vx to Vx AND Vy. Opcode 8XY2. 
 void VxToAND(){
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4]; 
+	V[getX(opcode)] = V[getX(opcode)] & V[getY(opcode)]; 
 	pc+=2;
 }
 
 //Sets Vx to Vx XOR Vy. Opcode 8XY3. 
 void VxToAND(){
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4]; 
+	V[getX(opcode)] = V[getX(opcode)] ^ V[getY(opcode)]; 
 	pc+=2;
 }
 
 //Adds Vy and Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY4.
 void VxVyAddedToVxCarry(){
-	unsigned short num = V[(opcode & 0x0F00) >> 8] + V[(opcode & 0x00F0) >> 4];
+	unsigned short num = V[getX(opcode)] + V[getY(opcode)];
 	//May have to change to bit comparasion. num > 0x00FF?
-	V[(opcode & 0x0F00) >> 8] = (num & 0x00FF);
+	V[getX(opcode)] = (num & 0x00FF);
 	
 	if(num > 255){
 		V[0x000F] = 1;
@@ -173,10 +200,10 @@ void VxVyAddedToVxCarry(){
 
 //Subtracts Vy from Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY5.
 void VyVxSubtractedToVxCarry(){
-	unsigned short num = V[(opcode & 0x0F00) >> 8] - V[(opcode & 0x00F0) >> 4];
+	unsigned short num = V[getX(opcode)] - V[getY(opcode)];
 	//Online doc says if Vx > Vy then Vf = 1, but shouldn't it be Vy > Vx?
-	V[(opcode & 0x0F00) >> 8] = (num & 0x00FF);
-	if(V[(opcode & 0x0F00) >> 8] > V[(opcode & 0x00F0) >> 4]){
+	V[getX(opcode)] = (num & 0x00FF);
+	if(V[getX(opcode)] > V[getY(opcode)]){
 		V[0x000F] = 1;
 	}
 	
@@ -189,38 +216,38 @@ void VyVxSubtractedToVxCarry(){
 
 //Set Vf as least sig bit in Vy. Shifts Vy right by 1 (divides by 2) and sets Vx as result. Opcode 8XY6.
 void VyDiv2IntoVxCarry(){
-	V[0x000F] = V[(opcode & 0x00F0) >> 4] & 0x0001;
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] >> 1;	
+	V[0x000F] = V[getY(opcode)] & 0x0001;
+	V[getX(opcode)] = V[getY(opcode)] >> 1;	
 	pc+=2;
 }
 
 //Sets Vx = Vy - Vx. If Vy > Vx then Vf = 1, o.w. 0. Opcode 8XY7.
 void Op_8XY7(){
 	
-	if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >>8])
+	if(V[getY(opcode)] > V[getX(opcode)])
 		V[0x000F] = 1;
 	else
 		V[0x000F] = 0;
 
-	V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >>4] - V[(opcode & 0x0F00) >> 8];
+	V[getX(opcode)] = V[getY(opcode)] - V[getX(opcode)];
 	pc+=2;
 }
 
 //If most sig fig bit of Vx is 1, then Vf is set to 1 o.w. 0. Then Vx *= 2. Opcode 8XYE.
 void Op_8XYE(){
 	
-	if(V[(opcode & 0x0F00) >> 8] & 0x1000 == 1)
+	if(V[getX(opcode)] & 0x1000 == 1)
 		V[0x000F] = 1;
 	else
 		V[0x000F] = 0;
 
-	V[(opcode & 0x0F00) >> 8] *= 2;
+	V[getX(opcode)] *= 2;
 	pc+=2;
 }
 
 //Skips next instruction if Vx != Vy. Opcode 9XY0.
 void Op_9XY0(){
-	if(V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
+	if(V[getX(opcode)] == V[getY(opcode)])
 		pc+=4;
 	else
 		pc+=2;
@@ -228,34 +255,104 @@ void Op_9XY0(){
 
 //Sets value of register I to nnn. Opcode Annn.
 void Op_Annn(){
-	I = (opcode & 0x0FFF);
+	I = getLLL(opcode);
 	pc += 2;
 }
 
 //Jumps pc =  nnn + v0. Opcode BNNN.
 void Op_Bnnn(){
-	pc = (opcode & 0x0FFF) +V[0];
+	pc = getLLL(opcode) +V[0];
 }
 
 //Set Vx = random byte AND kk. Opcode CXNN.
 void Op_CXNN(){
-	V[(opcode & 0x0F00) >> 8] = ((rand() % 255) & (opcode & 0x00FF));
+	V[getX(opcode)] = ((rand() % 255) & getNN(opcode));
 	pc +=2;
 }
 
 //Draw a sprite at coordinate (Vx, Vy) with width 8 and N height. Write from reg I. Vf is set to if pixel erases. Opcode DXYN.
 void Op_DXYN(){
 	
-	char *pixel = screen[V[(opcode & 0x0F00) >> 8]][V[(opcode & 0x00F0) >> 4]];
-	char tmpixel = pixel;
-	*mem_start = memory[I]
-	int i;
 
-	for(i = 0; i < (opcode & 0x000F);i++){
-		if(tmp == 1 && *a == 0)
-			V[0x000F] = 1;
-	}
+	//Is is memory[I] or I itself that I'm getting data from?
+	//I is short (2 bytes) and pixel is char (1 byte). 
+	
+	char *pixel;
+	short *mem_start = memory[I];
+	
+	Vx = getX(opcode);
+	Vy = getY(opcode);
+	height = opcode & 0x000F;
+
+	int i;
+	int j;
+
+	for(i = 0; i < height; i++){
+		//always 8 pixels width
+		for(j = 0; j < 8; j++){
+			
+			pixel = screen[Vx][Vy];
+			
 		
+			//To set VF 1 if the and of I and current 8 pixels (0s out all mismatches doesnt match then pixel had a 1 pixel that was flipped.
+			if ((mem_start & pixel) != 0){
+				V[0x000F] = 1;
+			}
+			
+			if(j%2==0){
+				*pixel = *pixel ^ ((*mem_start & 0x00F0) >> 4);
+			}
+			else{
+				*pixel = *pixel ^ (*mem_start & 0x000F);
+				*mem_start++;
+			}
+
+			Vx++;
+			Vy++;
+
+			if (Vx == 64){
+				Vx = 0;
+			}
+
+			if (Vy ==  32){
+				Vy = 0;
+			}
+		}
+	}
+
+	pc+=2;
+}
+
+//If key being held down from player == Vx, skip next instruction (pc+=4)
+void EX9E(){
+	if(key[getX(opcode)] == 0)
+		pc+=2
+	else
+		pc+=4
+}
+
+//If key Vx is not being held down skip next instruction (pc+=4)
+void EXA1(){
+	if(key[getX(opcode)] == 0)
+		pc+=4
+	else
+		pc+=2
+}
+
+//Sets Vx to delay_timer
+void FX07(){
+	getX(opcode) = delay_timer;
+	pc+=2;
+}
+
+
+//Wait until a key is pressed and then store it in Vx. 
+//Have to figure out how to deal with key presses.
+void FX0A(){
+	while(key not pressed){
+		getX(opcode) = key
+	}
+	pc+=2;
 }
 
 void chip8::initialize(){
@@ -330,79 +427,6 @@ void chip8::emulateCycle(){
 		--sound_timer;
 	}
 
-	//Some opcodes cant be decoded using the first four bits so we need another switch statement
-
-	switch(opcode & 0xF000){
-		case 0x000:
-			switch(opcode & 0x000F){
-				case 0x0000: //0x00E0: clears the screen
-					//Execture opcode
-				break;
-		case 0x000E: //0xOOEE: Returns from subroutine
-				//Execute opcode
-		break;
-
-		default:
-			printf("Unknown opcode [0x0000]: 0x%X\n", opcode);
-	}
-	break;
-	//more opcodes
-
-	case 0x2000:
-		stack[sp] = pc;
-		++sp;
-		pc = opcode & 0x0FFF;
-	break;
-
-	case 0x0004:
-		if(V[(opcode & 0x00F0) >> 4] > (0xFF - V(opcode & 0x0F00) >>  8]))
-			V[0xF] = 1; //carry
-		else
-			V[0xF] = 0;
-		V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
-		pc += 2;
-	break;
-
-	case 0x0033:
-		memory[I] = V[(opcode & 0x0F00) >> 8] / 100;
-		memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
-		memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
-		pc +=2;
-	break;
-	
-	case 0xD000:
-	{
-		unsigned short x = V[(opcode & 0x0F00) >> 8];
-		unsigned short y = V[(opcode & 0x00F0) >> 4];
-		unsigned short height = opcode & 0x000F;
-		unsigned short pixel;
-
-		V[0xF] = 0;
-		for (int yline = 0; yline < height; yline++){
-			pixel = memory[I + yline];
-			for(int xline = 0; xline < 8; xline++){
-				if(gfx[( x + xline + ((y +yline) * 64))] == 1){
-					V[0xF] = 1;
-				gfx[x + xline + ((y + yline) * 64)] ^= 1;
-				}
-			}
-		}
-	
-		drawFlag = true;
-		pc += 2;
-	}
-	break;
-
-	case 0xE000:
-		switch(opcode & 0x00FF){
-			// EX9E: Skips the next instruction 
-			// if the key stored in VX is pressed
-			case 0x009E:
-				if(key[V[(opcode & 0x0F00) >> 8]] != 0)
-					pc += 4;
-				else
-					pc += 2;
-			break;
 	//Execute Opcode
 	
 	//Update timers
