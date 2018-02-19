@@ -73,7 +73,6 @@ short getF(opcode){
 	return (opcode & 0x000F);
 }
 
-
 //Jump to a machine code routine at nnn. Opcode 0NNN
 void 0NNN(unsigned short opcode){
 	stack[sp] = pc;
@@ -104,7 +103,7 @@ void return_sub(){
 }
 
 //Jumps to location nnn. Opcode 1NNN.
-void goto_NNN(){
+void 1NNN(){
 	//Creating num 0x1000 by shifting 0x0001 12 times then using ^ to toggle that bit only.
 	pc = memory[opcode ^ (0x0001 << 12)];
 }
@@ -222,7 +221,7 @@ void VyDiv2IntoVxCarry(){
 }
 
 //Sets Vx = Vy - Vx. If Vy > Vx then Vf = 1, o.w. 0. Opcode 8XY7.
-void Op_8XY7(){
+void 8XY7(){
 	
 	if(V[getY(opcode)] > V[getX(opcode)])
 		V[0x000F] = 1;
@@ -234,7 +233,7 @@ void Op_8XY7(){
 }
 
 //If most sig fig bit of Vx is 1, then Vf is set to 1 o.w. 0. Then Vx *= 2. Opcode 8XYE.
-void Op_8XYE(){
+void 8XYE(){
 	
 	if(V[getX(opcode)] & 0x1000 == 1)
 		V[0x000F] = 1;
@@ -246,7 +245,7 @@ void Op_8XYE(){
 }
 
 //Skips next instruction if Vx != Vy. Opcode 9XY0.
-void Op_9XY0(){
+void 9XY0(){
 	if(V[getX(opcode)] == V[getY(opcode)])
 		pc+=4;
 	else
@@ -254,24 +253,24 @@ void Op_9XY0(){
 }
 
 //Sets value of register I to nnn. Opcode Annn.
-void Op_Annn(){
+void ANNN(){
 	I = getLLL(opcode);
 	pc += 2;
 }
 
 //Jumps pc =  nnn + v0. Opcode BNNN.
-void Op_Bnnn(){
+void BNNN(){
 	pc = getLLL(opcode) +V[0];
 }
 
 //Set Vx = random byte AND kk. Opcode CXNN.
-void Op_CXNN(){
+void CXNN(){
 	V[getX(opcode)] = ((rand() % 255) & getNN(opcode));
 	pc +=2;
 }
 
 //Draw a sprite at coordinate (Vx, Vy) with width 8 and N height. Write from reg I. Vf is set to if pixel erases. Opcode DXYN.
-void Op_DXYN(){
+void DXYN(){
 	
 
 	//Is is memory[I] or I itself that I'm getting data from?
@@ -282,7 +281,7 @@ void Op_DXYN(){
 	
 	Vx = getX(opcode);
 	Vy = getY(opcode);
-	height = opcode & 0x000F;
+	height = getF(opcode);
 
 	int i;
 	int j;
@@ -291,13 +290,11 @@ void Op_DXYN(){
 		//always 8 pixels width
 		for(j = 0; j < 8; j++){
 			
-			pixel = screen[Vx][Vy];
-			
+			pixel = screen[Vx][Vy];	
 		
 			//To set VF 1 if the and of I and current 8 pixels (0s out all mismatches doesnt match then pixel had a 1 pixel that was flipped.
-			if ((mem_start & pixel) != 0){
+			if ((mem_start & pixel) != 0)
 				V[0x000F] = 1;
-			}
 			
 			if(j%2==0){
 				*pixel = *pixel ^ ((*mem_start & 0x00F0) >> 4);
@@ -310,13 +307,11 @@ void Op_DXYN(){
 			Vx++;
 			Vy++;
 
-			if (Vx == 64){
+			if (Vx == 64)
 				Vx = 0;
-			}
 
-			if (Vy ==  32){
+			if (Vy ==  32)
 				Vy = 0;
-			}
 		}
 	}
 
@@ -349,9 +344,77 @@ void FX07(){
 //Wait until a key is pressed and then store it in Vx. 
 //Have to figure out how to deal with key presses.
 void FX0A(){
-	while(key not pressed){
-		getX(opcode) = key
+	
+	int i;
+	for(i=0; i<16; i++){
+		
+		if(key[i]!=0){
+			v[getX(opcode)] = key[i]
+			break;
+		}
+		
+		if(i== 15)
+			i = 0;
 	}
+	pc+=2;
+}
+
+//Sets delay timer to Vx. Opcode FX15.
+void FX15(){
+	delay_timer = V[getX(opcode)] 
+	pc+=2;
+}
+
+//Sets sound timer to Vx. Opcode FX18.
+void FX18(){
+	sound_timer = V[getX(opcode)];
+	pc+=2;
+}
+
+//Adds Vx to I. Opcode FX1E.
+void FX1E(){
+	I += V[getX(opcode)];
+	pc+=2;
+}
+
+//Sets I = location of the sprite for digit Vx. Opcode FX29. 
+//Why is it 0x5?
+void FX29(){
+	I = V[getX(opcode)] * 0x5;
+	pc+=2;
+}
+
+
+//FIX THIS ONE
+// Take decimal representation of Vx and stores the hundreth place number in I, the tenths place number in I+1 and ones place in I+2. Opcode FX33. 
+void FX33(){
+	*I + 0 = V[getX(opcode)] / 100;
+	*I + 1 = (V[getX(opcode)] / 10) % 10;
+	*I + 2 = (V[getX(opcode)] % 100) % 10;
+	pc += 2;
+}
+
+//Stores V0 to Vx into memory addresses from I to I + x (pointer addition). Opcode FX55.
+void FX55(){
+	
+	int i;
+	int limit = getX(opcode);
+
+	for(i = 0; i <= limit; i++)
+		*I + i =  V[i]; 
+	
+	pc+=2;
+}
+
+//Stores values in mem addresses I to I + x  (pointer addition) into V0 to Vx. Opcode FX65. 
+void FX65(){
+	
+	int i;
+	int limit = getX(opcode);
+	
+	for(i = 0; i <= limit; i++)
+		V[i] = *I + i;
+
 	pc+=2;
 }
 
