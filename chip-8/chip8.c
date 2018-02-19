@@ -49,7 +49,6 @@ void (*Chip8Arithmetic[16]) =
 
 //Functions for commonly used values embedded in opcodes. Of the form AXAA, AAYA, ALLL, AANN and AAAN respectively.
 
-
 short getX(opcode){
 	return (opcode & 0x0F00) >> 8;
 }
@@ -57,7 +56,6 @@ short getX(opcode){
 short getY(opcode){
 	return (opcode & 0x00F0)  >> 4;
 }
-
 
 //Made LLL so its not confused with NN.
 short getLLL(opcode){
@@ -81,7 +79,7 @@ void 0NNN(unsigned short opcode){
 }
 
 //Clears display. Opcode 00E0
-void clear_display(char display[]){
+void 00E0(char display[]){
 	int i;
 	for(i = 0; i < SCREEN_SIZE; i++){
 		display[i] = 0;
@@ -97,7 +95,7 @@ void clear_display(char display[]){
 }	
 
 //Returns from a subroutine. Opcode 00EE.
-void return_sub(){
+void 00EE(){
 	pc = stack[sp];
 	sp--;	
 }
@@ -109,7 +107,7 @@ void 1NNN(){
 }
 	
 //Calls subroutine at nnn. Opcode 2NNN.
-void call_NNN(){
+void 2NNN(){
 	stack[sp] = pc;
 	sp++;
 	//Creating num 0x2000 by shifting 0x0001 13 times then using ^ to toggle that bit only.
@@ -119,7 +117,7 @@ void call_NNN(){
 //Checking if stack pointer is at limit? Increment sp before or after placing pc in it?
 
 //Skips next instruction if Vx = NN. Opcode 3XNN.
-void VxIsNN(){
+void 3XNN{
 	if( V[getX(opcode)] == getNNN(opcode) )
 		pc+=4;
 	else
@@ -127,7 +125,7 @@ void VxIsNN(){
 }
 
 //Skips next instruction if Vx != NN. Opcode 4xNN.
-void VxIsNotNN(){		
+void 4XNN(){		
 	if( V[getX(opcode)] != getNN(opcode) )
 		pc+=4;
 	else
@@ -136,7 +134,7 @@ void VxIsNotNN(){
 
 
 //Skips next instruction if Vx = Vy. Opcode 5xY0.
-void VxIsVy(){	
+void 5XY0(){	
 	if( V[getX(opcode)] == V[getY(opcode)] )
 		pc+=4;
 	else
@@ -144,43 +142,43 @@ void VxIsVy(){
 }
 
 //Sets Vx = NN. Opcode 6XNN.
-void NNToVx(){
+void 6XNN(){
 	V[getX(opcode)] = getNN(opcode);
 	pc += 2;
 }
 
 //Adds NN to Vx. Opcode 7XNN.
-void NNAddedToVx(){
+void 7XNN(){
 	V[getX(opcode)] += getNN(opcode);
 	pc+=2;
 }
 
 //Sets Vx to the value of Vy. Opcode 8XY0.
-void VxToVy(){
+void 8XY0(){
 	V[getX(opcode)] = V[getY(opcode)];
 	pc+=2;
 }
 
 //Sets Vx to Vx OR Vy. Opcode 8XY1.
-void VxToOR(){
+void 8XY1(){
 	V[getX(opcode)] = V[getX(opcode)] | V[getY(opcode)]; 						
 	pc+=2;
 }
 
 //Sets Vx to Vx AND Vy. Opcode 8XY2. 
-void VxToAND(){
+void 8XY2(){
 	V[getX(opcode)] = V[getX(opcode)] & V[getY(opcode)]; 
 	pc+=2;
 }
 
 //Sets Vx to Vx XOR Vy. Opcode 8XY3. 
-void VxToAND(){
+void 8XY3(){
 	V[getX(opcode)] = V[getX(opcode)] ^ V[getY(opcode)]; 
 	pc+=2;
 }
 
 //Adds Vy and Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY4.
-void VxVyAddedToVxCarry(){
+void 8XY4(){
 	unsigned short num = V[getX(opcode)] + V[getY(opcode)];
 	//May have to change to bit comparasion. num > 0x00FF?
 	V[getX(opcode)] = (num & 0x00FF);
@@ -198,7 +196,7 @@ void VxVyAddedToVxCarry(){
 
 
 //Subtracts Vy from Vx to Vx keeping only last 8 bits. If result is > 255 (8 bits) set Vf to 1. Otherwise 0. Opcode 8XY5.
-void VyVxSubtractedToVxCarry(){
+void 8XY5(){
 	unsigned short num = V[getX(opcode)] - V[getY(opcode)];
 	//Online doc says if Vx > Vy then Vf = 1, but shouldn't it be Vy > Vx?
 	V[getX(opcode)] = (num & 0x00FF);
@@ -214,7 +212,7 @@ void VyVxSubtractedToVxCarry(){
 }
 
 //Set Vf as least sig bit in Vy. Shifts Vy right by 1 (divides by 2) and sets Vx as result. Opcode 8XY6.
-void VyDiv2IntoVxCarry(){
+void 8XY6(){
 	V[0x000F] = V[getY(opcode)] & 0x0001;
 	V[getX(opcode)] = V[getY(opcode)] >> 1;	
 	pc+=2;
@@ -418,7 +416,7 @@ void FX65(){
 	pc+=2;
 }
 
-void chip8::initialize(){
+void initialize(){
 	//Initialize registers and memory once
 	pc = 0x200; //Program counter starts at 0x200 cause thats were ROM is expected to be loaded
 	opcode = 0; //Reset current opccode
@@ -461,25 +459,14 @@ void chip8::initialize(){
 		memory[i+512] = buffer[i]
 }
 
-void chip8::emulateCycle(){
+void emulateCycle(){
 
 	//Fetch Opcode
 	opcode = memory[pc] << 8 | memory[pc+1];
 
 	//Decode Opcode
 
-	switch(opcode & 0xF000){
-		case 0xA00: //ANNN: Sets I to the address NNN
-			//Execute opcode
-			I = opcode & 0x0FFF;
-			pc+=2;
-		break;
-
-		//More opcodes 
-
-		default:
-		printf("Unknown opcode: 0x%X\n", opcode);
-	}
+	printf("Unknown opcode: 0x%X\n", opcode);
 	
 	//Update timers
 	if(delay_timer > 0)
@@ -493,4 +480,13 @@ void chip8::emulateCycle(){
 	//Execute Opcode
 	
 	//Update timers
+}
+
+void loadGame(char *string){
+	//Get file from directory
+	
+	
+	//load file 0x200 to 0x600 or end.
+	
+	
 }

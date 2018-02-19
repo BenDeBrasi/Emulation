@@ -12,8 +12,8 @@ int main(int argc, char **argv){
 	setupInput();
 
 	//Initialize the Chip8 system and load the game into the memory
-	myChip8.initialize();
-	myChip8.loadGame("pong");
+	initialize();
+	loadGame("pong");
 
 	//Emulation loop
 	for(;;){
