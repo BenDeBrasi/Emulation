@@ -34,18 +34,15 @@ signed char chip8_fontset[80] =
 */
 
 //Expand these 2 to include all 35 opcodes in both this file and .h. Determine which functions need to be in second.
-void (*Chip8Table[17]) = 
-{
-	0NNN      , clear_display, return_sub, goto_NNN, call_NNN, VxIsNN, VxIsNotNN, VxIsNotVy, 
-	cpuARITHMETIC, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
-	cpuNULL
-};
 
-void (*Chip8Arithmetic[16]) = 
-{
-	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, 
-	cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL, cpuNULL,
-};
+//Structured as follows: The first array contains an opcode where the most significant digit of the binary representation matches withthe index of the array. For most opcodes this is enough however the opcodes beginning with 8, 14 and 15 have multiple opcodes with the same MSB therefore a second array is added as auxiliary to check which function should run. 
+
+void (*Chip8Table[16]) = 
+{0NNN, 1NNN, 2NNN, 3XNN, 4XNN, 5XY0, 6XNN, 7XNN, 8XY0, 9XY0, ANNN,
+BNNN, CXNN, DXYN, EX9E, FX07};
+
+void (*Chip8Auxiliary[19]) = 
+{00E0, 00EE, 8XY1, 8XY2, 8XY3, 8XY4, 8XY5, 8XY6, 8XY7, 8XYE, EXA1, FX0A, FX15, FX18, FX1E, FX29, FX33, FX55, FX65};
 
 //Functions for commonly used values embedded in opcodes. Of the form AXAA, AAYA, ALLL, AANN and AAAN respectively.
 
@@ -69,6 +66,11 @@ short getNN(opcode){
 //Made F to not confuse with other getLLL or getNN.
 short getF(opcode){
 	return (opcode & 0x000F);
+}
+
+//Get Most Sig Bit for identification.
+short getMSB(opcode){
+	return (opcode & 0xF000) >> 12;
 }
 
 //Jump to a machine code routine at nnn. Opcode 0NNN
@@ -479,14 +481,85 @@ void emulateCycle(){
 
 	//Execute Opcode
 	
+	int index = getMSB(opcode);
+
+	if(index < 0 || index > 15){
+		printf("Incorrect Opcode\n");
+		return;
+	}
+
+	int aux_counter;
+
+	if(index == 0){
+		
+		for(aux_counter = 0; aux_counter <= 1; aux_counter++){
+			if(getF(opcode) == aux_counter)
+				(*Chip8Auxiliary[index])(opcode);
+		}
+	}
+
+	else if(index == 8 && getF(opcode) != 0){
+		
+		//0 to 7 correspond to indices in the auxiliary function pointer array where8 is the leading digit 
+		for(aux_counter = 2; aux_counter <= 9; aux_counter++){	
+			if(getF(opcode) == aux_counter)
+				(*Chip8Auxiliary[index])(opcode);
+		}
+	}
+
+	else if(index == 14 && getF(opcode) != 14){
+		(*Chip8Auxiliary[10])(opcode);
+	}
+
+	else if(index == 15 && getF(opcode) != 10){
+		
+		int LSB = getNN(opcode);
+		if(LSB == 0A)
+			(*Chip8Table[11])(opcode);
+		else if(LSB == 15)
+			(*Chip8Table[12])(opcode);
+		else if(LSB == 18)
+			(*Chip8Table[13])(opcode);
+		else if(LSB == 1E)
+			(*Chip8Table[14])(opcode);
+		else if(LSB == 29)
+			(*Chip8Table[15])(opcode);
+		else if(LSB == 33)
+			(*Chip8Table[16])(opcode);
+		else if(LSB == 55)
+			(*Chip8Table[17])(opcode);
+		else
+			(*Chip8Table[18])(opcode);
+	}
+
+	else{
+		(*Chip8Table[index])(opcode);
+	}
+
+
 	//Update timers
 }
 
-void loadGame(char *string){
+void loadGame(char *path_to_ROM){
 	//Get file from directory
+	int c;
+	int i;
+	FILE *ROM;
+	ROM = (path_to_ROM, "r");
 	
-	
-	//load file 0x200 to 0x600 or end.
-	
-	
+	if(!ROM){
+		printf("Enter a proper directory to a ROM file\n");
+		return;
+	}
+	else{
+		//loads program from 0x200 to 0x600 or end.
+		
+		for(i = 0x200; (c= getc(ROM)) != EOF && i < 0x600; i++){
+			memory[i] = c;
+			i++;	
+		}
+	}
+
+	fclose(ROM);
+	return;
 }
