@@ -538,6 +538,14 @@ void emulateCycle(){
 
 
 	//Update timers
+	if(delay_timer != 0)
+		delay_timer--;
+
+	if(sound_timer != 0){
+		if(sound_timer>0)
+			//Sound!
+		sound_timer--;
+	}
 }
 
 void loadGame(char *path_to_ROM){
@@ -562,4 +570,21 @@ void loadGame(char *path_to_ROM){
 
 	fclose(ROM);
 	return;
+}
+
+void setupGraphics(){
+
+
+}
+
+void setupInput(){
+
+
+}
+
+void drawGraphics(){
+}
+
+void setKeys(){
+
 }

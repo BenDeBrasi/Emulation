@@ -19,7 +19,7 @@ int main(int argc, char **argv){
 	for(;;){
 		
 		//Emulate one cycle
-		myChip8.emulateCycle();
+		emulateCycle();
 
 		//If the draw flag is set, update the screen
 		if(myChip8.drawFlag)
