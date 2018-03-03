@@ -37,12 +37,9 @@ signed char chip8_fontset[80] =
 
 //Structured as follows: The first array contains an opcode where the most significant digit of the binary representation matches withthe index of the array. For most opcodes this is enough however the opcodes beginning with 8, 14 and 15 have multiple opcodes with the same MSB therefore a second array is added as auxiliary to check which function should run. 
 
-void (*Chip8Table[16]) = 
-{0NNN, 1NNN, 2NNN, 3XNN, 4XNN, 5XY0, 6XNN, 7XNN, 8XY0, 9XY0, ANNN,
-BNNN, CXNN, DXYN, EX9E, FX07};
+void (*Chip8Table[16]) = {0NNN, 1NNN, 2NNN, 3XNN, 4XNN, 5XY0, 6XNN, 7XNN, 8XY0, 9XY0, ANNN, BNNN, CXNN, DXYN, EX9E, FX07};
 
-void (*Chip8Auxiliary[19]) = 
-{00E0, 00EE, 8XY1, 8XY2, 8XY3, 8XY4, 8XY5, 8XY6, 8XY7, 8XYE, EXA1, FX0A, FX15, FX18, FX1E, FX29, FX33, FX55, FX65};
+void (*Chip8Auxiliary[19]) = {op_00E0, 00EE, 8XY1, 8XY2, 8XY3, 8XY4, 8XY5, 8XY6, 8XY7, 8XYE, EXA1, FX0A, FX15, FX18, FX1E, FX29, FX33, FX55, FX65};
 
 //Functions for commonly used values embedded in opcodes. Of the form AXAA, AAYA, ALLL, AANN and AAAN respectively.
 
@@ -81,7 +78,7 @@ void 0NNN(unsigned short opcode){
 }
 
 //Clears display. Opcode 00E0
-void 00E0(char display[]){
+void op_00E0(char display[]){
 	int i;
 	for(i = 0; i < SCREEN_SIZE; i++){
 		display[i] = 0;
@@ -491,11 +488,13 @@ void emulateCycle(){
 	int aux_counter;
 
 	if(index == 0){
-		
-		for(aux_counter = 0; aux_counter <= 1; aux_counter++){
-			if(getF(opcode) == aux_counter)
-				(*Chip8Auxiliary[index])(opcode);
-		}
+			
+		if(getF(opcode) == 0)
+			(*Chip8Auxiliary[0])(opcode);
+		else if (getF(opcode) == 15)
+			(*Chip8Auxiliary[1])(opcode);
+		else
+			(*Chip8Table[0])(opcode);
 	}
 
 	else if(index == 8 && getF(opcode) != 0){
@@ -515,21 +514,21 @@ void emulateCycle(){
 		
 		int LSB = getNN(opcode);
 		if(LSB == 0A)
-			(*Chip8Table[11])(opcode);
+			(*Chip8Auxiliary[11])(opcode);
 		else if(LSB == 15)
-			(*Chip8Table[12])(opcode);
+			(*Chip8Auxiliary[12])(opcode);
 		else if(LSB == 18)
-			(*Chip8Table[13])(opcode);
+			(*Chip8Auxiliary[13])(opcode);
 		else if(LSB == 1E)
-			(*Chip8Table[14])(opcode);
+			(*Chip8Auxiliary[14])(opcode);
 		else if(LSB == 29)
-			(*Chip8Table[15])(opcode);
+			(*Chip8Auxiliary[15])(opcode);
 		else if(LSB == 33)
-			(*Chip8Table[16])(opcode);
+			(*Chip8Auxiliary[16])(opcode);
 		else if(LSB == 55)
-			(*Chip8Table[17])(opcode);
+			(*Chip8Auxiliary[17])(opcode);
 		else
-			(*Chip8Table[18])(opcode);
+			(*Chip8Auxiliary[18])(opcode);
 	}
 
 	else{
@@ -543,7 +542,7 @@ void emulateCycle(){
 
 	if(sound_timer != 0){
 		if(sound_timer>0)
-			//Sound!
+			beep();
 		sound_timer--;
 	}
 }
@@ -572,17 +571,20 @@ void loadGame(char *path_to_ROM){
 	return;
 }
 
-void setupGraphics(){
+void beep(){
+	system("./sound_script.sh");
+}
 
+void setupGraphics(){
 
 }
 
 void setupInput(){
 
-
 }
 
 void drawGraphics(){
+
 }
 
 void setKeys(){

@@ -38,6 +38,6 @@ unsigned char key[16];
 
 //Function pointers for opcodes. Second pointer for special case 0x8 opcodes.
 void (*Chip8Table[16])();
-void (*Chip8Arithmetic[19])();	
+void (*Chip8Auxiliary[19])();	
 
 #endif
