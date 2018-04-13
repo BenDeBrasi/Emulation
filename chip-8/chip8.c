@@ -35,7 +35,7 @@ signed char chip8_fontset[80] =
 
 //Expand these 2 to include all 35 opcodes in both this file and .h. Determine which functions need to be in second.
 
-//Structured as follows: The first array contains an opcode where the most significant digit of the binary representation matches withthe index of the array. For most opcodes this is enough however the opcodes beginning with 8, 14 and 15 have multiple opcodes with the same MSB therefore a second array is added as auxiliary to check which function should run. 
+//Structured as follows: The first array contains an opcode where the most significant digit of the binary representation matches with the index of the array. For most opcodes this is enough however the opcodes beginning with 8, 14 and 15 have multiple opcodes with the same MSB therefore a second array is added as auxiliary to check which function should run. 
 
 void (*Chip8Table[16]) = {0NNN, 1NNN, 2NNN, 3XNN, 4XNN, 5XY0, 6XNN, 7XNN, 8XY0, 9XY0, ANNN, BNNN, CXNN, DXYN, EX9E, FX07};
 
@@ -535,7 +535,6 @@ void emulateCycle(){
 		(*Chip8Table[index])(opcode);
 	}
 
-
 	//Update timers
 	if(delay_timer != 0)
 		delay_timer--;
@@ -590,3 +589,31 @@ void drawGraphics(){
 void setKeys(){
 
 }
+/*
+
+	0 = not pressed, 1 = pressed
+
+   Controller layout:
+	if keyPressed == 0
+		key[0] = 1;
+	
+
+	1->key[0]
+	2->key[1]
+	3->key[2] etc...
+	4
+	q
+	w
+	e
+	r
+	a
+	s
+	d
+	f
+	z
+	x
+	c
+	v
+
+*/
+
