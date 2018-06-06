@@ -30,14 +30,14 @@ short getMSB(short opcode){
 
 int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int outputStartPosition, int outputEndPosition){
 	char iString[7];
-	char resString[7];
-	int j;
+	char resString[7];	
 
 	for(int i = 0; i < 0xffff; i++){
-		j = inputStartPosition;
+		
 		sprintf(iString,"%#06x\n", i);
 		sprintf(resString,"%#06x\n", (*foo)(i));
-		for(int z = 0; z < 8; z++){
+
+		for(int z = 0, j = inputStartPosition; z < 6; z++){
 			if(z >= outputStartPosition && z <= outputEndPosition){
 				if(resString[z] != iString[j]){
 					printf("Error in matching\n");	
@@ -52,8 +52,6 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 		}
 	}
 }
-
-
 
 int main(){
 	short (*foo) (short)= getX;
