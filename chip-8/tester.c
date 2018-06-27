@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <regex.h>
 
 short getX(short opcode){
 	return (opcode & 0x0F00) >> 8;
@@ -29,73 +28,33 @@ short getMSB(short opcode){
 	return (opcode & 0xF000) >> 12;
 }
 
-regex_t regex1;
-regex_t regex2;
-regex_t regex3;
-regex_t regex4;
+int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int outputStartPosition, int outputEndPosition){
+	char iString[7];
+	char resString[7];	
 
-int testWithValue;
-int testWithoutValue;
-int ansWithValue;
-int ansWithoutValue;
+	for(int i = 0; i < 0xffff; i++){
+		
+		sprintf(iString,"%#06x\n", i);
+		sprintf(resString,"%#06x\n", (*foo)(i));
 
-char msgbuf[100];
-
-int inputRegex;
-int inputRegex1;
-int outputRegex;
-int outputRegex1;
+		for(int z = 0, j = inputStartPosition; z < 6; z++){
+			if(z >= outputStartPosition && z <= outputEndPosition){
+				if(resString[z] != iString[j]){
+					printf("Error in matching\n");	
+				}
+				j++;
+			}
+			else{	
+				if(resString[z] != '0' && (z==1 && resString[z] != 'x')){
+					printf("Error in 0s or x \n");	
+				}
+			}
+		}
+	}
+}
 
 int main(){
-	
-	testWithValue = regcomp(&regex1,"0x.[1-9]..",0);
-	testWithoutValue = regcomp(&regex2,"0x.[0]..",0);
-	ansWithValue = regcomp(&regex3,"0x000[^0]",0);
-	ansWithoutValue = regcomp(&regex4,"0x000[0]",0);
-
-	if(testWithValue){
-		printf("Error compiling regex1.\n");
-	}
-
-	if(testWithoutValue){
-		printf("Error compiling regex2.\n");
-	}
-
-	if(ansWithValue){
-		printf("Error compiling regex3.\n");
-	}
-
-	if(ansWithoutValue){
-		printf("Error compiling regex4.\n");
-	}
-		
-	char iString[7];
-	char resString[7];
-
-	for(int i = 0; i < 0xFFFF; i++){
-		sprintf(iString,"%#06x\n", i);
-		sprintf(resString,"%#06x\n", getX(i));
-		
-		inputRegex = regexec(&regex1, iString,0, NULL, 0);
-		inputRegex1 = regexec(&regex2, iString,0, NULL, 0);
-		outputRegex = regexec(&regex3, resString,0, NULL, 0);
-		outputRegex1 = regexec(&regex4, resString,0, NULL, 0);
-
-		if((inputRegex != 0 && outputRegex != 0) || (inputRegex1 != 0 && outputRegex1 != 0)){
-			printf("%d\n",i);
-		}
-		//Make these print messages more detailed if an error comes out
-		else if (inputRegex == REG_NOMATCH || outputRegex == REG_NOMATCH || inputRegex1 == REG_NOMATCH || outputRegex1 == REG_NOMATCH){
-			printf("Not a match\n");
-		}else{
-			printf("Error matching\n");
-		}	
-	}
-
-	regfree(&regex1);
-	regfree(&regex2);
-	regfree(&regex3);
-	regfree(&regex4);
-
+	short (*foo) (short)= getX;
+	test((*foo),3,3,5,5);
 	return 0;
 }
