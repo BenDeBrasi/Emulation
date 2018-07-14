@@ -36,6 +36,8 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 		
 		sprintf(iString,"%#06x\n", i);
 		sprintf(resString,"%#06x\n", (*foo)(i));
+		if(resString == "000000\n")
+			printf("No dice\n");
 
 		for(int z = 0, j = inputStartPosition; z < 6; z++){
 			if(z >= outputStartPosition && z <= outputEndPosition){
@@ -45,8 +47,10 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 				j++;
 			}
 			else{	
-				if(resString[z] != '0' && (z==1 && resString[z] != 'x')){
-					printf("Error in 0s or x \n");	
+				if((resString[z] != '0' && z != 1)|| (z==1 && resString[z] != 'x')){
+					printf("Error in 0s or x \n");
+					printf(iString);
+					printf(resString);
 				}
 			}
 		}
