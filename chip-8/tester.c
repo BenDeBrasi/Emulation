@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 short getX(short opcode){
 	return (opcode & 0x0F00) >> 8;
@@ -36,8 +37,16 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 		
 		sprintf(iString,"%#06x\n", i);
 		sprintf(resString,"%#06x\n", (*foo)(i));
-		if(resString == "000000\n")
-			printf("No dice\n");
+		resString[1] = 'x';
+		
+		/*
+		Proved all hexs with NxN0NN getX was outputting 000000 instead 0x0000
+		if(resString[1] != 'x'){
+			printf(resString);
+			int x = (*foo)(i);
+			printf("num: %#06x ans: %#06x\n",i,x);
+		}
+		*/
 
 		for(int z = 0, j = inputStartPosition; z < 6; z++){
 			if(z >= outputStartPosition && z <= outputEndPosition){
@@ -47,10 +56,10 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 				j++;
 			}
 			else{	
-				if((resString[z] != '0' && z != 1)|| (z==1 && resString[z] != 'x')){
-					printf("Error in 0s or x \n");
-					printf(iString);
-					printf(resString);
+				if( !((resString[z] == '0' && z != 1) || (z==1 && resString[z] == 'x'))){
+					printf("Error with index # %d \n",z);
+					printf("%s",iString);
+					printf("%s",resString);
 				}
 			}
 		}
@@ -58,7 +67,7 @@ int test(short (*foo) (short),int inputStartPosition, int inputEndPosition, int 
 }
 
 int main(){
-	short (*foo) (short)= getX;
-	test((*foo),3,3,5,5);
+	short (*foo) (short)= getMSB;
+	test((*foo),2,2,5,5);
 	return 0;
 }
