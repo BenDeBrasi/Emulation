@@ -6,7 +6,11 @@ Read through the guide copying code only after I understood what it does.
 
 Currently on:
 
-Opcode examples
+SDL functionality
+
+Got audio up and running thanks to this guide:
+
+http://gigi.nullneuron.net/gigilabs/playing-a-wav-file-using-sdl2/
 
 Future Plans:
 
