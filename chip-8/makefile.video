@@ -1,0 +1,2 @@
+sdlVid: sdlVid.c
+	gcc -o sdlVid sdlVid.c -I /usr/include/SDL2/ -lSDL2

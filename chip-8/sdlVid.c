@@ -9,6 +9,15 @@ int main(){
 	}
 	
 	SDL_Window *window;
+	SDL_Renderer *renderer;
+	
+	SDL_CreateWindowAndRenderer(1280,640,0,&window,&renderer);
+
+	SDL_RenderDrawPoint(renderer,400,300);
+	SDL_RenderDrawPoint(renderer,500,300);
+	SDL_RenderPresent(renderer);
+
+	/*
 	window = SDL_CreateWindow(
 		"SDL2 window",
 		SDL_WINDOWPOS_UNDEFINED,
@@ -17,6 +26,7 @@ int main(){
 		480,
 		SDL_WINDOW_OPENGL
 	);
+	*/
 	
 	if (window == NULL){
 		printf("Screen error\n");
